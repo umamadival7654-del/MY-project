@@ -1,0 +1,12 @@
+# Output Directory
+
+This directory contains all generated visualizations, reports, and analysis outputs from the Movie Rating Analysis project.
+
+## Generated Files
+
+- `01_rating_analysis.png` - Rating distribution, trends, and box plots
+- `02_genre_analysis.png` - Genre analysis visualizations
+- `analysis_report.txt` - Comprehensive text report
+- Other analysis outputs will be saved here
+
+All files are automatically generated when running the analysis.

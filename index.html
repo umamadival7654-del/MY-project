@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Rating Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .navbar {
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 1rem 2rem;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .navbar h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .navbar .status {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            background-color: #4CAF50;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .nav-tabs {
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 0;
+            margin: 0;
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .nav-tab {
+            padding: 1rem 1.5rem;
+            color: white;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .nav-tab:hover {
+            background-color: rgba(102, 126, 234, 0.2);
+        }
+
+        .nav-tab.active {
+            background-color: rgba(102, 126, 234, 0.3);
+            border-bottom-color: #667eea;
+            color: #667eea;
+        }
+
+        .view-container {
+            display: none;
+        }
+
+        .view-container.active {
+            display: block;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+            margin: 0.5rem 0;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            background-color: white;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #667eea;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button.active {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .tab-button:hover {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .tab-content {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .search-box button {
+            padding: 0.75rem 1.5rem;
+            background-color: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .search-box button:hover {
+            background-color: #764ba2;
+        }
+
+        .movie-list {
+            list-style: none;
+        }
+
+        .movie-item {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+        }
+
+        .movie-item:last-child {
+            border-bottom: none;
+        }
+
+        .movie-info h4 {
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .movie-info p {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .movie-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .rating-badge {
+            background-color: #667eea;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .genre-tag {
+            display: inline-block;
+            background-color: #e0e0e0;
+            color: #333;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .chart-container {
+            margin: 2rem 0;
+            position: relative;
+            height: 400px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #764ba2;
+        }
+
+        .btn-secondary {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d0d0d0;
+        }
+
+        .footer {
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        .stat-card-small {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card-small .value {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .stat-card-small .label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .featured-movie {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .featured-movie h2 {
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .featured-movie-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .featured-movie-info h3 {
+            font-size: 1.4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .featured-movie-rating {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+
+        .featured-stars-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1.5rem 0 1rem 0;
+            padding: 1rem;
+            background-color: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+        }
+
+        .featured-stars {
+            font-size: 1.8rem;
+            letter-spacing: 0.15em;
+            font-weight: bold;
+        }
+
+        .featured-rating-text {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 1.2rem;
+            background-color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+        }
+
+        .featured-movie-genres {
+            margin: 1rem 0;
+        }
+
+        .edit-button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn-edit {
+            background-color: white;
+            color: #667eea;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-edit:hover {
+            background-color: #f0f0f0;
+        }
+
+        .edit-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+
+        .edit-form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .edit-form-group label {
+            display: block;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .edit-form-group input,
+        .edit-form-group textarea,
+        .edit-form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        .edit-form-group input:focus,
+        .edit-form-group textarea:focus,
+        .edit-form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 8px rgba(102, 126, 234, 0.2);
+        }
+
+        .edit-form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn-save {
+            flex: 1;
+            background-color: #667eea;
+            color: white;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-save:hover {
+            background-color: #764ba2;
+        }
+
+        .btn-cancel {
+            flex: 1;
+            background-color: #e0e0e0;
+            color: #333;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-cancel:hover {
+            background-color: #d0d0d0;
+        }
+
+        /* Dashboard Styles */
+        .dashboard-header {
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-header h2 {
+            color: white;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .dashboard-header p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1rem;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .kpi-card-label {
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-card-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-card-detail {
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        .kpi-card.gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .kpi-card.gradient .kpi-card-label {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .kpi-card.gradient .kpi-card-value {
+            color: white;
+        }
+
+        .kpi-card.gradient .kpi-card-detail {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .chart-card h3 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+        }
+
+        .chart-container-full {
+            position: relative;
+            height: 350px;
+            margin: 0;
+        }
+
+        .top-movies-card {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .top-movies-card h3 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+        }
+
+        .movie-rank-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s ease;
+        }
+
+        .movie-rank-item:last-child {
+            border-bottom: none;
+        }
+
+        .movie-rank-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .rank-badge {
+            min-width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-right: 1rem;
+        }
+
+        .rank-badge.gold {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+        }
+
+        .rank-badge.silver {
+            background: linear-gradient(135deg, #C0C0C0 0%, #A9A9A9 100%);
+        }
+
+        .rank-badge.bronze {
+            background: linear-gradient(135deg, #CD7F32 0%, #B8860B 100%);
+        }
+
+        .movie-rank-info {
+            flex: 1;
+        }
+
+        .movie-rank-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.3rem;
+        }
+
+        .movie-rank-meta {
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .movie-rank-details {
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .rating-badges {
+            font-size: 1rem;
+            letter-spacing: 0.1em;
+            font-weight: bold;
+        }
+
+        .rating-text {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #667eea;
+            background-color: #f0f0f0;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .rating-count {
+            font-size: 0.8rem;
+            color: #bbb;
+        }
+
+        .movie-rank-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: auto;
+        }
+
+        .rating-large {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-mini-card {
+            background: #f5f5f5;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-mini-card.alt1 {
+            border-left-color: #764ba2;
+        }
+
+        .stat-mini-card.alt2 {
+            border-left-color: #4CAF50;
+        }
+
+        .stat-mini-card.alt3 {
+            border-left-color: #FF6B6B;
+        }
+
+        .stat-mini-label {
+            font-size: 0.8rem;
+            color: #999;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-mini-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-tabs {
+                flex-wrap: wrap;
+                padding: 0.5rem;
+            }
+
+            .nav-tab {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab-button {
+                width: 100%;
+            }
+
+            .movie-item {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .featured-movie-content {
+                grid-template-columns: 1fr;
+            }
+
+            .featured-movie {
+                padding: 1.5rem;
+            }
+
+            .featured-movie h2 {
+                font-size: 1.6rem;
+            }
+
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .movie-rank-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .movie-rank-rating {
+                margin-left: 0;
+                margin-top: 0.5rem;
+                width: 100%;
+            }
+
+            .movie-rank-details {
+                width: 100%;
+                flex-direction: column;
+                gap: 0.3rem;
+            }
+
+            .rating-badges {
+                font-size: 0.9rem;
+            }
+
+            .rating-large {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <div class="navbar">
+        <h1>🎬 Movie Rating Analysis</h1>
+        <div class="status">
+            <div class="status-badge" id="db-status">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchView('dashboard')">📊 Dashboard</button>
+        <button class="nav-tab" onclick="switchView('featured')">⭐ Featured Movie</button>
+    </div>
+
+    <!-- Dashboard View -->
+    <div id="dashboard" class="view-container active">
+        <div class="container">
+            <div class="dashboard-header">
+                <h2>📈 Movie Analytics Dashboard</h2>
+                <p>Comprehensive analysis of movie ratings and user engagement</p>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="kpi-grid">
+                <div class="kpi-card gradient">
+                    <div class="kpi-card-label">Total Movies</div>
+                    <div class="kpi-card-value" id="dash-total-movies">-</div>
+                    <div class="kpi-card-detail">In Database</div>
+                </div>
+                <div class="kpi-card gradient">
+                    <div class="kpi-card-label">Total Ratings</div>
+                    <div class="kpi-card-value" id="dash-total-ratings">-</div>
+                    <div class="kpi-card-detail">User Ratings</div>
+                </div>
+                <div class="kpi-card gradient">
+                    <div class="kpi-card-label">Active Users</div>
+                    <div class="kpi-card-value" id="dash-total-users">-</div>
+                    <div class="kpi-card-detail">Unique Users</div>
+                </div>
+                <div class="kpi-card gradient">
+                    <div class="kpi-card-label">Average Rating</div>
+                    <div class="kpi-card-value" id="dash-avg-rating">-</div>
+                    <div class="kpi-card-detail">Out of 5.0</div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <h3>📊 Rating Distribution</h3>
+                    <div class="chart-container-full">
+                        <canvas id="rating-distribution-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3>🎭 Top Genres by Rating</h3>
+                    <div class="chart-container-full">
+                        <canvas id="genre-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Movies Section -->
+            <div class="top-movies-card">
+                <h3>⭐ Top 10 Rated Movies</h3>
+                <div id="top-movies-dashboard" class="loading">Loading...</div>
+            </div>
+
+            <!-- Popular Movies Section -->
+            <div class="top-movies-card">
+                <h3>🔥 Most Popular Movies (By Rating Count)</h3>
+                <div id="popular-movies-dashboard" class="loading">Loading...</div>
+            </div>
+
+            <!-- Statistics Overview -->
+            <div class="top-movies-card">
+                <h3>📈 Statistical Summary</h3>
+                <div class="stats-row">
+                    <div class="stat-mini-card">
+                        <div class="stat-mini-label">Minimum Rating</div>
+                        <div class="stat-mini-value" id="stat-min-rating">-</div>
+                    </div>
+                    <div class="stat-mini-card alt1">
+                        <div class="stat-mini-label">Maximum Rating</div>
+                        <div class="stat-mini-value" id="stat-max-rating">-</div>
+                    </div>
+                    <div class="stat-mini-card alt2">
+                        <div class="stat-mini-label">Std Deviation</div>
+                        <div class="stat-mini-value" id="stat-std-rating">-</div>
+                    </div>
+                    <div class="stat-mini-card alt3">
+                        <div class="stat-mini-label">Avg Ratings/Movie</div>
+                        <div class="stat-mini-value" id="stat-avg-per-movie">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Featured Movie View -->
+    <div id="featured" class="view-container">
+        <div class="container">
+            <div id="featured-loading" class="loading">Loading top-rated movie...</div>
+            
+            <div id="featured-movie-container" style="display: none;">
+                <h2>⭐ Featured Movie - Top Rated</h2>
+                <div class="featured-movie-content">
+                    <div class="featured-movie-info">
+                        <h3 id="featured-title">Movie Title</h3>
+                        <div class="featured-movie-rating" id="featured-rating">0.00</div>
+                        
+                        <!-- Star Rating Display -->
+                        <div class="featured-stars-section">
+                            <div class="featured-stars" id="featured-stars">⭐⭐⭐⭐⭐</div>
+                            <div class="featured-rating-text" id="featured-rating-text">5.0/5.0</div>
+                        </div>
+
+                        <p><strong>Genres:</strong> <span id="featured-genres">N/A</span></p>
+                        <p><strong>Number of Ratings:</strong> <span id="featured-count">0</span> ratings</p>
+                        <p><strong>Movie ID:</strong> <span id="featured-id">-</span></p>
+                        <div class="edit-button-group">
+                            <button class="btn-edit" onclick="toggleEditMode()">✏️ Edit Movie Features</button>
+                        </div>
+                    </div>
+                    <div id="featured-stats" class="stat-card-small" style="text-align: left; padding: 1.5rem;">
+                        <div style="margin-bottom: 1rem;">
+                            <div class="value" id="stats-movies">-</div>
+                            <div class="label">Total Movies</div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <div class="value" id="stats-ratings">-</div>
+                            <div class="label">Total Ratings</div>
+                        </div>
+                        <div style="margin-bottom: 1rem;">
+                            <div class="value" id="stats-users">-</div>
+                            <div class="label">Active Users</div>
+                        </div>
+                        <div>
+                            <div class="value" id="stats-avg">-</div>
+                            <div class="label">Avg Rating</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit Form -->
+            <div id="edit-form-container" style="display: none;">
+                <div class="edit-form">
+                    <h3 style="color: #667eea; margin-bottom: 1.5rem;">Edit Movie Features</h3>
+                    
+                    <div class="edit-form-group">
+                        <label for="edit-title">Movie Title</label>
+                        <input type="text" id="edit-title" placeholder="Enter movie title">
+                    </div>
+
+                    <div class="edit-form-group">
+                        <label for="edit-rating">Rating (0-5)</label>
+                        <input type="number" id="edit-rating" min="0" max="5" step="0.1" placeholder="Enter rating">
+                    </div>
+
+                    <div class="edit-form-group">
+                        <label for="edit-genres">Genres (comma-separated)</label>
+                        <input type="text" id="edit-genres" placeholder="e.g., Action, Drama, Sci-Fi">
+                    </div>
+
+                    <div class="edit-form-group">
+                        <label for="edit-description">Description</label>
+                        <textarea id="edit-description" placeholder="Enter movie description"></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn-save" onclick="saveMovieChanges()">💾 Save Changes</button>
+                        <button class="btn-cancel" onclick="cancelEditMode()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success/Error Messages -->
+            <div id="message-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>&copy; 2026 Movie Rating Analysis Project | Data Science with Python, MongoDB & Flask</p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        let currentTopMovie = null;
+        let isEditMode = false;
+
+        // Switch view
+        function switchView(viewName) {
+            // Hide all views
+            document.querySelectorAll('.view-container').forEach(view => {
+                view.classList.remove('active');
+            });
+
+            // Hide all nav tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected view
+            document.getElementById(viewName).classList.add('active');
+
+            // Mark button as active
+            event.target.classList.add('active');
+
+            // Load data if needed
+            if (viewName === 'dashboard') {
+                loadDashboard();
+            } else if (viewName === 'featured') {
+                loadFeaturedMovie();
+            }
+        }
+
+        // ==================== Dashboard Functions ====================
+
+        async function loadDashboard() {
+            try {
+                await Promise.all([
+                    loadDashboardStats(),
+                    loadRatingDistributionChart(),
+                    loadGenreChart(),
+                    loadTopMoviesDashboard(),
+                    loadPopularMoviesDashboard()
+                ]);
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        // Helper function to generate star rating
+        function generateStarRating(rating) {
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 >= 0.5;
+            let stars = '';
+
+            // Full stars
+            for (let i = 0; i < fullStars; i++) {
+                stars += '⭐';
+            }
+
+            // Half star
+            if (hasHalfStar && fullStars < 5) {
+                stars += '✨';
+            }
+
+            // Empty stars
+            const emptyStars = 5 - Math.ceil(rating);
+            for (let i = 0; i < emptyStars; i++) {
+                stars += '☆';
+            }
+
+            return stars;
+        }
+
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch(`${API_URL}/stats`);
+                const data = await response.json();
+
+                // Update KPI cards
+                document.getElementById('dash-total-movies').textContent = data.total_movies;
+                document.getElementById('dash-total-ratings').textContent = data.total_ratings.toLocaleString();
+                document.getElementById('dash-total-users').textContent = data.total_users;
+                document.getElementById('dash-avg-rating').textContent = data.average_rating.toFixed(2);
+
+                // Update stats summary
+                document.getElementById('stat-min-rating').textContent = data.min_rating.toFixed(2);
+                document.getElementById('stat-max-rating').textContent = data.max_rating.toFixed(2);
+                document.getElementById('stat-std-rating').textContent = data.std_rating.toFixed(2);
+
+                // Calculate avg ratings per movie
+                const avgPerMovie = (data.total_ratings / data.total_movies).toFixed(1);
+                document.getElementById('stat-avg-per-movie').textContent = avgPerMovie;
+
+                document.getElementById('db-status').textContent = '✓ Connected';
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                document.getElementById('db-status').textContent = '✗ Error';
+            }
+        }
+
+        async function loadRatingDistributionChart() {
+            try {
+                const response = await fetch(`${API_URL}/ratings/distribution`);
+                const data = await response.json();
+
+                const ctx = document.getElementById('rating-distribution-chart');
+                if (ctx && ctx.chart) {
+                    ctx.chart.destroy();
+                }
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(data),
+                        datasets: [{
+                            label: 'Number of Ratings',
+                            data: Object.values(data),
+                            backgroundColor: [
+                                '#FF6B6B',
+                                '#FFA500',
+                                '#FFD93D',
+                                '#6BCB77',
+                                '#4D96FF'
+                            ],
+                            borderColor: '#667eea',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { beginAtZero: true }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: true, position: 'top' }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading rating distribution:', error);
+            }
+        }
+
+        async function loadGenreChart() {
+            try {
+                const response = await fetch(`${API_URL}/genres/stats`);
+                const data = await response.json();
+
+                if (!data.genres || data.genres.length === 0) {
+                    return;
+                }
+
+                // Get top 8 genres
+                const topGenres = data.genres.slice(0, 8);
+                const labels = topGenres.map(g => g._id || g.genre || 'Unknown');
+                const ratings = topGenres.map(g => parseFloat((g.avg_rating || 0).toFixed(2)));
+
+                const ctx = document.getElementById('genre-chart');
+                if (ctx && ctx.chart) {
+                    ctx.chart.destroy();
+                }
+
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: ratings,
+                            backgroundColor: [
+                                '#667eea',
+                                '#764ba2',
+                                '#FF6B6B',
+                                '#FFA500',
+                                '#FFD93D',
+                                '#6BCB77',
+                                '#4D96FF',
+                                '#FF00FF'
+                            ],
+                            borderColor: '#fff',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading genre chart:', error);
+            }
+        }
+
+        async function loadTopMoviesDashboard() {
+            const container = document.getElementById('top-movies-dashboard');
+
+            try {
+                const response = await fetch(`${API_URL}/movies/top-rated?limit=10&min_ratings=1`);
+                const data = await response.json();
+
+                container.innerHTML = '';
+
+                if (data.movies && data.movies.length > 0) {
+                    data.movies.forEach((movie, index) => {
+                        const rating = movie.avg_rating || movie.mean || 0;
+                        const count = movie.rating_count || movie.count || 0;
+                        const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : '';
+                        const stars = generateStarRating(rating);
+
+                        const html = `
+                            <div class="movie-rank-item">
+                                <div class="rank-badge ${rankClass}">${index + 1}</div>
+                                <div class="movie-rank-info">
+                                    <div class="movie-rank-title">${movie.title || 'N/A'}</div>
+                                    <div class="movie-rank-meta">${movie.genres || 'N/A'}</div>
+                                    <div class="movie-rank-details">
+                                        <span class="rating-badges">${stars}</span>
+                                        <span class="rating-text">${rating.toFixed(2)}/5.0</span>
+                                        <span class="rating-count">• ${count} ratings</span>
+                                    </div>
+                                </div>
+                                <div class="movie-rank-rating">
+                                    <span class="rating-large">${rating.toFixed(1)}</span>
+                                </div>
+                            </div>
+                        `;
+                        container.innerHTML += html;
+                    });
+                } else {
+                    container.innerHTML = '<div class="error">No movies found</div>';
+                }
+            } catch (error) {
+                console.error('Error loading top movies dashboard:', error);
+                container.innerHTML = '<div class="error">Error loading top movies</div>';
+            }
+        }
+
+        async function loadPopularMoviesDashboard() {
+            const container = document.getElementById('popular-movies-dashboard');
+
+            try {
+                const response = await fetch(`${API_URL}/movies/popular?limit=10`);
+                const data = await response.json();
+
+                container.innerHTML = '';
+
+                if (data.movies && data.movies.length > 0) {
+                    data.movies.forEach((movie, index) => {
+                        const rating = movie.avg_rating || 0;
+                        const count = movie.rating_count || 0;
+                        const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : '';
+                        const stars = generateStarRating(rating);
+
+                        const html = `
+                            <div class="movie-rank-item">
+                                <div class="rank-badge ${rankClass}">${index + 1}</div>
+                                <div class="movie-rank-info">
+                                    <div class="movie-rank-title">${movie.title || 'N/A'}</div>
+                                    <div class="movie-rank-meta">${movie.genres || 'N/A'}</div>
+                                    <div class="movie-rank-details">
+                                        <span class="rating-badges">${stars}</span>
+                                        <span class="rating-text">${rating.toFixed(2)}/5.0</span>
+                                        <span class="rating-count">• ${count} ratings</span>
+                                    </div>
+                                </div>
+                                <div class="movie-rank-rating">
+                                    <span class="rating-large">${rating.toFixed(1)}</span>
+                                </div>
+                            </div>
+                        `;
+                        container.innerHTML += html;
+                    });
+                } else {
+                    container.innerHTML = '<div class="error">No movies found</div>';
+                }
+            } catch (error) {
+                console.error('Error loading popular movies dashboard:', error);
+                container.innerHTML = '<div class="error">Error loading popular movies</div>';
+            }
+        }
+
+        // ==================== Featured Movie Functions ====================
+
+        // Display featured movie
+        function displayFeaturedMovie() {
+            const movie = currentTopMovie;
+            const rating = movie.avg_rating || movie.mean || 0;
+            const count = movie.rating_count || movie.count || 0;
+            const stars = generateStarRating(rating);
+            
+            document.getElementById('featured-title').textContent = movie.title || 'N/A';
+            document.getElementById('featured-rating').textContent = rating.toFixed(2);
+            document.getElementById('featured-stars').textContent = stars;
+            document.getElementById('featured-rating-text').textContent = `${rating.toFixed(2)}/5.0`;
+            document.getElementById('featured-genres').textContent = movie.genres || 'N/A';
+            document.getElementById('featured-count').textContent = count;
+            document.getElementById('featured-id').textContent = movie.movieId || 'N/A';
+            
+            // Populate edit form with current values
+            document.getElementById('edit-title').value = movie.title || '';
+            document.getElementById('edit-rating').value = rating.toFixed(2);
+            document.getElementById('edit-genres').value = movie.genres || '';
+            document.getElementById('edit-description').value = movie.description || '';
+            
+            document.getElementById('featured-loading').style.display = 'none';
+            document.getElementById('featured-movie-container').style.display = 'block';
+        }
+
+        // Load featured top-rated movie
+        async function loadFeaturedMovie() {
+            try {
+                const response = await fetch(`${API_URL}/movies/top-rated?limit=1`);
+                const data = await response.json();
+                
+                if (data.movies && data.movies.length > 0) {
+                    currentTopMovie = data.movies[0];
+                    displayFeaturedMovie();
+                    loadFeaturedStatistics();
+                } else {
+                    document.getElementById('featured-loading').innerHTML = '<div class="error">No movies found</div>';
+                }
+            } catch (error) {
+                console.error('Error loading featured movie:', error);
+                document.getElementById('featured-loading').innerHTML = '<div class="error">Error loading featured movie. Make sure the server is running.</div>';
+            }
+        }
+
+        // Load featured statistics
+        async function loadFeaturedStatistics() {
+            try {
+                const response = await fetch(`${API_URL}/stats`);
+                const data = await response.json();
+                
+                document.getElementById('stats-movies').textContent = data.total_movies;
+                document.getElementById('stats-ratings').textContent = data.total_ratings.toLocaleString();
+                document.getElementById('stats-users').textContent = data.total_users;
+                document.getElementById('stats-avg').textContent = data.average_rating.toFixed(2);
+            } catch (error) {
+                console.error('Error loading featured statistics:', error);
+            }
+        }
+
+        // Toggle edit mode
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            document.getElementById('edit-form-container').style.display = isEditMode ? 'block' : 'none';
+        }
+
+        // Cancel edit mode
+        function cancelEditMode() {
+            isEditMode = false;
+            document.getElementById('edit-form-container').style.display = 'none';
+            clearMessage();
+        }
+
+        // Save movie changes
+        async function saveMovieChanges() {
+            const updatedData = {
+                title: document.getElementById('edit-title').value,
+                rating: parseFloat(document.getElementById('edit-rating').value),
+                genres: document.getElementById('edit-genres').value,
+                description: document.getElementById('edit-description').value
+            };
+
+            // Validation
+            if (!updatedData.title.trim()) {
+                showMessage('Please enter a movie title', 'error');
+                return;
+            }
+
+            if (isNaN(updatedData.rating) || updatedData.rating < 0 || updatedData.rating > 5) {
+                showMessage('Rating must be between 0 and 5', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/movies/${currentTopMovie.movieId || 1}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updatedData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Update displayed movie
+                    currentTopMovie.title = updatedData.title;
+                    currentTopMovie.avg_rating = updatedData.rating;
+                    currentTopMovie.genres = updatedData.genres;
+                    currentTopMovie.description = updatedData.description;
+                    
+                    displayFeaturedMovie();
+                    isEditMode = false;
+                    document.getElementById('edit-form-container').style.display = 'none';
+                    showMessage('Movie features updated successfully!', 'success');
+                } else {
+                    showMessage(`Error: ${result.error || 'Failed to update movie'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error saving changes:', error);
+                showMessage('Error saving changes. Please try again.', 'error');
+            }
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            const container = document.getElementById('message-container');
+            const className = type === 'success' ? 'success' : 'error';
+            container.innerHTML = `<div class="${className}">${message}</div>`;
+            
+            if (type === 'success') {
+                setTimeout(clearMessage, 3000);
+            }
+        }
+
+        // Clear message
+        function clearMessage() {
+            document.getElementById('message-container').innerHTML = '';
+        }
+
+        // Toggle edit mode
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            document.getElementById('edit-form-container').style.display = isEditMode ? 'block' : 'none';
+        }
+
+        // Cancel edit mode
+        function cancelEditMode() {
+            isEditMode = false;
+            document.getElementById('edit-form-container').style.display = 'none';
+            clearMessage();
+        }
+
+        // Save movie changes
+        async function saveMovieChanges() {
+            const updatedData = {
+                title: document.getElementById('edit-title').value,
+                rating: parseFloat(document.getElementById('edit-rating').value),
+                genres: document.getElementById('edit-genres').value,
+                description: document.getElementById('edit-description').value
+            };
+
+            // Validation
+            if (!updatedData.title.trim()) {
+                showMessage('Please enter a movie title', 'error');
+                return;
+            }
+
+            if (isNaN(updatedData.rating) || updatedData.rating < 0 || updatedData.rating > 5) {
+                showMessage('Rating must be between 0 and 5', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/movies/${currentTopMovie.movieId || 1}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updatedData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Update displayed movie
+                    currentTopMovie.title = updatedData.title;
+                    currentTopMovie.avg_rating = updatedData.rating;
+                    currentTopMovie.genres = updatedData.genres;
+                    currentTopMovie.description = updatedData.description;
+                    
+                    displayFeaturedMovie();
+                    isEditMode = false;
+                    document.getElementById('edit-form-container').style.display = 'none';
+                    showMessage('Movie features updated successfully!', 'success');
+                } else {
+                    showMessage(`Error: ${result.error || 'Failed to update movie'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error saving changes:', error);
+                showMessage('Error saving changes. Please try again.', 'error');
+            }
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            const container = document.getElementById('message-container');
+            const className = type === 'success' ? 'success' : 'error';
+            container.innerHTML = `<div class="${className}">${message}</div>`;
+            
+            if (type === 'success') {
+                setTimeout(clearMessage, 3000);
+            }
+        }
+
+        // Clear message
+        function clearMessage() {
+            document.getElementById('message-container').innerHTML = '';
+        }
+
+        // Load initial statistics
+        async function loadStatistics() {
+            try {
+                const response = await fetch(`${API_URL}/stats`);
+                const data = await response.json();
+                
+                document.getElementById('db-status').textContent = '✓ Connected';
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+                document.getElementById('db-status').textContent = '✗ Error';
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', function() {
+            loadStatistics();
+            loadDashboard();
+        });
+    </script>
+</body>
+</html>
